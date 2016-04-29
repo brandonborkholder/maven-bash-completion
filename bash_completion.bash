@@ -118,7 +118,7 @@ _mvn()
     COMPREPLY=()
     POM_HIERARCHY=()
     __pom_hierarchy
-    _get_comp_words_by_ref -n : cur prev
+    _get_comp_words_by_ref -n : cur prev words
 
     local opts="-am|-amd|-B|-C|-c|-cpu|-D|-e|-emp|-ep|-f|-fae|-ff|-fn|-gs|-h|-l|-N|-npr|-npu|-nsu|-o|-P|-pl|-q|-rf|-s|-T|-t|-U|-up|-V|-v|-X"
     local long_opts="--also-make|--also-make-dependents|--batch-mode|--strict-checksums|--lax-checksums|--check-plugin-updates|--define|--errors|--encrypt-master-password|--encrypt-password|--file|--fail-at-end|--fail-fast|--fail-never|--global-settings|--help|--log-file|--non-recursive|--no-plugin-registry|--no-plugin-updates|--no-snapshot-updates|--offline|--activate-profiles|--projects|--quiet|--resume-from|--settings|--threads|--toolchains|--update-snapshots|--update-plugins|--show-version|--version|--debug"
@@ -184,6 +184,8 @@ _mvn()
     local plugin_goals_jgitflow="jgitflow:feature-start|jgitflow:feature-finish|jgitflow:release-start|jgitflow:release-finish|jgitflow:hotfix-start|jgitflow:hotfix-finish|jgitflow:build-number"
     local plugin_goals_wildfly="wildfly:add-resource|wildfly:deploy|wildfly:deploy-only|wildfly:deploy-artifact|wildfly:redeploy|wildfly:redeploy-only|wildfly:undeploy|wildfly:undeploy-artifact|wildfly:run|wildfly:start|wildfly:shutdown|wildfly:execute-commands"
 
+    local plugin_args_exec_java="-Dexec.args|-Dexec.classpathScope|-Dexec.cleanupDaemonThreads|-Dexec.daemonThreadJoinTimeout|-Dexec.includePluginsDependencies|-Dexec.includeProjectDependencies|-Dexec.keepAlive|-Dexec.killAfter|-Dexec.mainClass|-Dexec.skip|-Dexec.stopUnresponsiveDaemonThreads|-DsourceRoot|-DtestSourceRoot"
+
     ## some plugin (like jboss-as) has '-' which is not allowed in shell var name, to use '_' then replace
     local common_plugins=`compgen -v | grep "^plugin_goals_.*" | sed 's/plugin_goals_//g' | tr '_' '-' | tr '\n' '|'`
 
@@ -198,10 +200,19 @@ _mvn()
         local profiles="${profiles}|${profile_pom}"
     done
 
+    local goal_options=""
+    for item in ${words[@]}
+    do
+        if [ "$item"z == "exec:java"z ]
+        then
+            goal_options="|${plugin_args_exec_java}"
+        fi
+    done
+
     local IFS=$'|\n'
 
     if [[ ${cur} == -D* ]] ; then
-      COMPREPLY=( $(compgen -S ' ' -W "${options}" -- ${cur}) )
+      COMPREPLY=( $(compgen -S ' ' -W "${options}${goal_options}" -- ${cur}) )
 
     elif [[ ${prev} == -P ]] ; then
       if [[ ${cur} == *,* ]] ; then
